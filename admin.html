@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Artwork — Neruson Creations</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="admin-header wrap">
+  <a href="index.html" class="admin-back">← View site</a>
+  <div class="admin-mark">
+    <span class="js-artist-name">NERUSON</span> <span class="js-brand-line">CREATIONS</span>
+    <small>Content dashboard</small>
+  </div>
+  <div class="admin-header-actions">
+    <button class="ghost-btn" id="exportBtn">Export JSON</button>
+    <label class="ghost-btn" for="importInput">Import JSON</label>
+    <input type="file" id="importInput" accept="application/json" hidden>
+  </div>
+</header>
+
+<nav class="admin-tabs wrap">
+  <button class="admin-tab active" data-tab="works">Artwork</button>
+  <button class="admin-tab" data-tab="collections">Collections</button>
+  <button class="admin-tab" data-tab="about">About</button>
+  <button class="admin-tab" data-tab="settings">Site &amp; Social</button>
+</nav>
+
+<main class="wrap admin-main">
+
+  <!-- ==================== ARTWORK TAB ==================== -->
+  <section class="admin-panel" data-panel="works">
+
+    <div class="admin-panel-head">
+      <div>
+        <h2>Artwork</h2>
+        <p>Add new drawings, edit their details, feature them, hide them, or remove them. Changes appear on the live site instantly.</p>
+      </div>
+      <div class="upload-drop" id="uploadDrop">
+        <input type="file" id="uploadInput" accept="image/*" multiple hidden>
+        <span class="upload-icon">+</span>
+        <span>Drop images here or <u>browse</u></span>
+        <small>You can select multiple files at once — each becomes a new draft artwork you can fill in below.</small>
+      </div>
+    </div>
+
+    <div class="admin-toolbar">
+      <input type="search" id="workSearch" placeholder="Search by title, tag, or medium…">
+      <button class="ghost-btn" id="newWorkBtn">+ New blank artwork</button>
+    </div>
+
+    <div class="work-list" id="workList"></div>
+  </section>
+
+  <!-- ==================== COLLECTIONS TAB ==================== -->
+  <section class="admin-panel" data-panel="collections" hidden>
+    <div class="admin-panel-head">
+      <div>
+        <h2>Collections</h2>
+        <p>Group artwork into collections like Portraits, Self, People, Studies, or Archive.</p>
+      </div>
+      <button class="ghost-btn" id="newCollectionBtn">+ New collection</button>
+    </div>
+    <div class="coll-list" id="collList"></div>
+  </section>
+
+  <!-- ==================== ABOUT TAB ==================== -->
+  <section class="admin-panel" data-panel="about" hidden>
+    <div class="admin-panel-head">
+      <div><h2>About</h2><p>This text and portrait appear in the About section of the site.</p></div>
+    </div>
+    <form class="admin-form" id="aboutForm">
+      <label>Section title
+        <input type="text" name="aboutTitle">
+      </label>
+      <label>Artist statement <span class="hint">Separate paragraphs with a blank line.</span>
+        <textarea name="aboutText" rows="8"></textarea>
+      </label>
+      <label>Portrait / self-portrait
+        <select name="aboutPortraitId"></select>
+      </label>
+      <button class="solid-btn" type="submit">Save about section</button>
+    </form>
+  </section>
+
+  <!-- ==================== SETTINGS TAB ==================== -->
+  <section class="admin-panel" data-panel="settings" hidden>
+    <div class="admin-panel-head">
+      <div><h2>Site &amp; Social</h2><p>Global site settings, hero artwork, footer phrase, and social links.</p></div>
+    </div>
+    <form class="admin-form" id="settingsForm">
+      <div class="form-grid">
+        <label>Artist name (line 1 of the logo)
+          <input type="text" name="artistName">
+        </label>
+        <label>Brand line (line 2 of the logo)
+          <input type="text" name="brandLine">
+        </label>
+        <label>Tagline
+          <input type="text" name="tagline">
+        </label>
+        <label>Hero subtitle
+          <input type="text" name="heroSubtitle">
+        </label>
+        <label>Hero artwork
+          <select name="heroArtworkId"></select>
+        </label>
+        <label>Footer phrase
+          <input type="text" name="footerPhrase">
+        </label>
+      </div>
+      <h3 class="admin-subhead">Social &amp; contact links</h3>
+      <div class="form-grid">
+        <label>Instagram URL <input type="url" name="instagram" placeholder="https://instagram.com/…"></label>
+        <label>Facebook URL <input type="url" name="facebook" placeholder="https://facebook.com/…"></label>
+        <label>Email <input type="email" name="email" placeholder="hello@example.com"></label>
+        <label>Other link <input type="url" name="other" placeholder="https://…"></label>
+      </div>
+      <button class="solid-btn" type="submit">Save settings</button>
+    </form>
+
+    <div class="danger-zone">
+      <h3 class="admin-subhead">Reset</h3>
+      <p>Restore the original placeholder content. This cannot be undone.</p>
+      <button class="ghost-btn danger" id="resetBtn">Reset to default content</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================== WORK EDIT MODAL ==================== -->
+<div class="modal" id="workModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="modalTitle">Edit artwork</h3>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <form class="admin-form" id="workForm">
+      <input type="hidden" name="id">
+      <div class="modal-body">
+        <div class="modal-image-col">
+          <div class="modal-image-preview">
+            <img id="workImgPreview" src="" alt="">
+          </div>
+          <label class="ghost-btn small" for="workImgInput">Replace image</label>
+          <input type="file" id="workImgInput" accept="image/*" hidden>
+          <label class="ghost-btn small" for="workRefInput">Set reference photo (optional)</label>
+          <input type="file" id="workRefInput" accept="image/*" hidden>
+          <div id="refPreviewWrap" class="ref-preview-wrap" hidden>
+            <img id="workRefPreview" src="" alt="">
+            <button type="button" class="text-btn" id="clearRefBtn">Remove reference</button>
+          </div>
+        </div>
+        <div class="modal-fields">
+          <label>Title <input type="text" name="title" required placeholder="Portrait of ___"></label>
+          <div class="form-grid two">
+            <label>Date / year <input type="text" name="date" placeholder="2026"></label>
+            <label>Medium <input type="text" name="medium" placeholder="Graphite / Pencil"></label>
+          </div>
+          <div class="form-grid two">
+            <label>Category <input type="text" name="category" placeholder="Portrait"></label>
+            <label>Collection
+              <select name="collection"></select>
+            </label>
+          </div>
+          <div class="form-grid two">
+            <label>Reference type
+              <select name="referenceType">
+                <option>Personal</option>
+                <option>Friend</option>
+                <option>Self</option>
+                <option>Someone admired</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>Reference / person name <span class="hint">optional</span>
+              <input type="text" name="referenceName" placeholder="Left blank if private">
+            </label>
+          </div>
+          <label>Tags <span class="hint">comma separated</span>
+            <input type="text" name="tags" placeholder="portrait, graphite, people">
+          </label>
+          <label>Description
+            <textarea name="description" rows="4" placeholder="Graphite portrait study based on a personal reference."></textarea>
+          </label>
+          <div class="form-grid two checks">
+            <label class="checkbox"><input type="checkbox" name="featured"> Featured</label>
+            <label class="checkbox"><input type="checkbox" name="hidden"> Hidden from site</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="text-btn danger" id="deleteWorkBtn">Delete artwork</button>
+        <button type="submit" class="solid-btn">Save artwork</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
