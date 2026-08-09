@@ -25,6 +25,27 @@ const DEFAULT_DATA = {
       facebook: "https://facebook.com/nerusoncreations",
       email: "hello@nerusoncreations.com",
       other: ""
+    },
+    siteText: {
+      heroParagraph: "Personal drawings of people the artist admires, is close to, or sees in the mirror — translated into graphite and ink.",
+      worksEyebrow: "01 — Gallery",
+      worksTitle: "Selected Works",
+      worksNote: "A running collection of portraits, studies, and self-portraits — each one begins with a real reference and ends in graphite or ink.",
+      latestEyebrow: "02 — The Latest",
+      collectionsEyebrow: "03 — Collections",
+      collectionsTitle: "Grouped by Subject",
+      collectionsNote: "Every drawing belongs somewhere — a person, a self, a study, or the archive it grew out of.",
+      aboutEyebrow: "04 — About",
+      processEyebrow: "05 — Process",
+      processTitle: "From Reference to Drawing",
+      processIntro: "Every piece begins as a photograph — a real moment, a real person. Drag the line to see where the drawing takes over.",
+      processCaption: "Drag horizontally, or hover on desktop — reference photo on the left, finished drawing on the right.",
+      archiveEyebrow: "06 — Archive",
+      archiveTitle: "The Full Catalog",
+      archiveNote: "Every piece, chronologically. Filter by year, category, or medium to find your way through.",
+      contactTitle: "Let's Talk",
+      metaTitle: "Neruson Creations — Black lines. Human stories.",
+      metaDescription: "Neruson Creations — a personal collection of black-and-white pencil and ink drawings exploring people, expression, and identity."
     }
   },
 
@@ -82,7 +103,14 @@ class NerusonStoreImpl {
   _load(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return JSON.parse(raw);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        // backfill fields added in later versions (e.g. siteText) so upgrading
+        // never blanks out content that predates this version of the store.
+        parsed.settings = parsed.settings || {};
+        parsed.settings.siteText = { ...DEFAULT_DATA.settings.siteText, ...(parsed.settings.siteText||{}) };
+        return parsed;
+      }
     }catch(e){ console.warn("Neruson store: could not read localStorage", e); }
     const seeded = JSON.parse(JSON.stringify(DEFAULT_DATA));
     this._save(seeded);
@@ -111,7 +139,8 @@ class NerusonStoreImpl {
   // ---- writes ----
   updateSettings(patch){
     this._data.settings = { ...this._data.settings, ...patch,
-      social: { ...this._data.settings.social, ...(patch.social||{}) } };
+      social: { ...this._data.settings.social, ...(patch.social||{}) },
+      siteText: { ...this._data.settings.siteText, ...(patch.siteText||{}) } };
     this._save(this._data);
   }
 

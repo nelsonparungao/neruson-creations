@@ -28,6 +28,7 @@
   <button class="admin-tab active" data-tab="works">Artwork</button>
   <button class="admin-tab" data-tab="collections">Collections</button>
   <button class="admin-tab" data-tab="about">About</button>
+  <button class="admin-tab" data-tab="pagetext">Page Text</button>
   <button class="admin-tab" data-tab="settings">Site &amp; Social</button>
 </nav>
 
@@ -85,6 +86,73 @@
         <select name="aboutPortraitId"></select>
       </label>
       <button class="solid-btn" type="submit">Save about section</button>
+    </form>
+  </section>
+
+  <!-- ==================== PAGE TEXT TAB ==================== -->
+  <section class="admin-panel" data-panel="pagetext" hidden>
+    <div class="admin-panel-head">
+      <div>
+        <h2>Page Text</h2>
+        <p>Every heading, intro line, and blurb on the public site — edit any of it here and it updates live.</p>
+      </div>
+    </div>
+    <form class="admin-form" id="pageTextForm">
+
+      <h3 class="admin-subhead">Hero</h3>
+      <label>Hero paragraph <span class="hint">the sentence under the big title on the homepage</span>
+        <textarea name="heroParagraph" rows="2"></textarea>
+      </label>
+
+      <h3 class="admin-subhead">Works section</h3>
+      <div class="form-grid two">
+        <label>Eyebrow label <input type="text" name="worksEyebrow"></label>
+        <label>Section title <input type="text" name="worksTitle"></label>
+      </div>
+      <label>Section note <textarea name="worksNote" rows="2"></textarea></label>
+
+      <h3 class="admin-subhead">"The Latest" section</h3>
+      <label>Eyebrow label <input type="text" name="latestEyebrow"></label>
+
+      <h3 class="admin-subhead">Collections section</h3>
+      <div class="form-grid two">
+        <label>Eyebrow label <input type="text" name="collectionsEyebrow"></label>
+        <label>Section title <input type="text" name="collectionsTitle"></label>
+      </div>
+      <label>Section note <textarea name="collectionsNote" rows="2"></textarea></label>
+
+      <h3 class="admin-subhead">About section</h3>
+      <label>Eyebrow label <span class="hint">the title &amp; body text are edited on the About tab</span>
+        <input type="text" name="aboutEyebrow">
+      </label>
+
+      <h3 class="admin-subhead">Process section</h3>
+      <div class="form-grid two">
+        <label>Eyebrow label <input type="text" name="processEyebrow"></label>
+        <label>Section title <input type="text" name="processTitle"></label>
+      </div>
+      <label>Intro paragraph <textarea name="processIntro" rows="2"></textarea></label>
+      <label>Caption under the slider <textarea name="processCaption" rows="2"></textarea></label>
+
+      <h3 class="admin-subhead">Archive section</h3>
+      <div class="form-grid two">
+        <label>Eyebrow label <input type="text" name="archiveEyebrow"></label>
+        <label>Section title <input type="text" name="archiveTitle"></label>
+      </div>
+      <label>Section note <textarea name="archiveNote" rows="2"></textarea></label>
+
+      <h3 class="admin-subhead">Contact section</h3>
+      <label>Section title <input type="text" name="contactTitle"></label>
+
+      <h3 class="admin-subhead">Search &amp; browser tab (SEO)</h3>
+      <label>Page title <span class="hint">shown in the browser tab and search results</span>
+        <input type="text" name="metaTitle">
+      </label>
+      <label>Page description <span class="hint">shown under the title in search results and link previews</span>
+        <textarea name="metaDescription" rows="2"></textarea>
+      </label>
+
+      <button class="solid-btn" type="submit">Save page text</button>
     </form>
   </section>
 

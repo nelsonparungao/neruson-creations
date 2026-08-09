@@ -18,6 +18,7 @@
 
   function init(){
     renderNav();
+    renderSiteText();
     renderHero();
     renderGallery();
     renderLatest();
@@ -37,7 +38,7 @@
   }
 
   function renderAll(){
-    renderNav(); renderHero(); renderGallery(); renderLatest(); renderCollections();
+    renderNav(); renderSiteText(); renderHero(); renderGallery(); renderLatest(); renderCollections();
     renderAbout(); renderProcess(); renderArchive(); renderContact(); renderFooter();
     setupScrollReveal();
   }
@@ -47,6 +48,37 @@
     const s = store.settings();
     $$(".js-artist-name").forEach(el => el.textContent = s.artistName.toUpperCase());
     $$(".js-brand-line").forEach(el => el.textContent = s.brandLine.toUpperCase());
+  }
+
+  /* -------------------------------------------------- page text (headings, intros, meta) -------------------------------------------------- */
+  function renderSiteText(){
+    const t = store.settings().siteText || {};
+    const set = (sel, val) => { if(val == null) return; const el = $(sel); if(el) el.textContent = val; };
+
+    set(".js-hero-paragraph", t.heroParagraph);
+    set(".js-works-eyebrow", t.worksEyebrow);
+    set(".js-works-title", t.worksTitle);
+    set(".js-works-note", t.worksNote);
+    set(".js-latest-eyebrow", t.latestEyebrow);
+    set(".js-collections-eyebrow", t.collectionsEyebrow);
+    set(".js-collections-title", t.collectionsTitle);
+    set(".js-collections-note", t.collectionsNote);
+    set(".js-about-eyebrow", t.aboutEyebrow);
+    set(".js-process-eyebrow", t.processEyebrow);
+    set(".js-process-title", t.processTitle);
+    set(".js-process-intro", t.processIntro);
+    set(".js-process-caption", t.processCaption);
+    set(".js-archive-eyebrow", t.archiveEyebrow);
+    set(".js-archive-title", t.archiveTitle);
+    set(".js-archive-note", t.archiveNote);
+    set(".js-contact-title", t.contactTitle);
+
+    if(t.metaTitle) document.title = t.metaTitle;
+    if(t.metaDescription){
+      $('meta[name="description"]')?.setAttribute("content", t.metaDescription);
+      $('meta[property="og:description"]')?.setAttribute("content", t.metaDescription);
+    }
+    if(t.metaTitle) $('meta[property="og:title"]')?.setAttribute("content", t.metaTitle);
   }
 
   function setupStickyNav(){

@@ -20,6 +20,7 @@
     renderWorkList();
     renderCollectionsTab();
     renderAboutForm();
+    renderPageTextForm();
     renderSettingsForm();
     setupUpload();
     setupWorkModal();
@@ -318,6 +319,30 @@
         aboutPortraitId: fd.get("aboutPortraitId")
       });
       toast("About section saved.");
+    };
+  }
+
+  /* -------------------------------------------------- page text tab -------------------------------------------------- */
+  const PAGE_TEXT_FIELDS = [
+    "heroParagraph","worksEyebrow","worksTitle","worksNote","latestEyebrow",
+    "collectionsEyebrow","collectionsTitle","collectionsNote","aboutEyebrow",
+    "processEyebrow","processTitle","processIntro","processCaption",
+    "archiveEyebrow","archiveTitle","archiveNote","contactTitle",
+    "metaTitle","metaDescription"
+  ];
+
+  function renderPageTextForm(){
+    const t = store.settings().siteText || {};
+    const form = $("#pageTextForm");
+    PAGE_TEXT_FIELDS.forEach(name => { if(form[name]) form[name].value = t[name] || ""; });
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const siteText = {};
+      PAGE_TEXT_FIELDS.forEach(name => { siteText[name] = fd.get(name); });
+      store.updateSettings({ siteText });
+      toast("Page text saved.");
     };
   }
 
