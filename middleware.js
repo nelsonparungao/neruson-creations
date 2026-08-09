@@ -1,9 +1,15 @@
-// Vercel Edge Middleware — password-protects /admin.html
+// Vercel Edge Middleware — password-protects /admin.html AND /api/*.
 // Place this file at the ROOT of your project (same level as index.html).
 // Vercel auto-detects a root-level middleware.js file for any project type.
+//
+// /api/content (the write endpoint) needs this too — without it, anyone
+// who found that URL could POST changes directly, bypassing admin.html
+// entirely. Browsers automatically resend the same Basic Auth credentials
+// to any path under this matcher once you've logged into admin.html, so
+// this doesn't add an extra login step in practice.
 
 export const config = {
-  matcher: '/admin.html',
+  matcher: ['/admin.html', '/api/:path*'],
 };
 
 export default function middleware(request) {
