@@ -1,12 +1,21 @@
 /* ==========================================================================
    NERUSON CREATIONS — data store
-   Everything the site renders lives here, persisted to localStorage under
-   one key so it behaves like a lightweight embedded database. Swap
-   NerusonStore's methods for real API/database calls later without
-   touching any rendering code in main.js / admin.js.
+   Content lives in Supabase (a shared, hosted Postgres database) so every
+   visitor and every device sees the same thing. Reads go straight to
+   Supabase using the public anon key below (safe to expose — Row Level
+   Security only allows it to SELECT). Writes go through /api/content,
+   a protected serverless function that uses a private service-role key.
+   main.js / admin.js don't know or care about any of this — they just
+   call store.settings(), store.upsertWork(), etc. as before.
    ========================================================================== */
 
-const STORAGE_KEY = "neruson_creations_v1";
+// ---- fill these in from your Supabase project (Settings -> API) ----
+// Both are safe to keep in this public file: the URL isn't secret, and
+// the "anon" key is designed to be exposed to browsers — Row Level
+// Security policies (set up in Supabase) are what actually restrict it
+// to read-only. Never put the "service_role" key here.
+const SUPABASE_URL = "https://bvislmgbpjqxojewfkgl.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ2aXNsbWdicGpxeG9qZXdma2dsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzMDE0MDQsImV4cCI6MjEwMTg3NzQwNH0.UAC-E-6oxnN34gY1ibD3JvmSi5XJWu7eJqMzipXmRH8";
 
 const DEFAULT_DATA = {
   settings: {
@@ -79,50 +88,78 @@ const DEFAULT_DATA = {
       image:"assets/works/work-06.svg", refImage:"assets/refs/ref-06.svg", featured:false, hidden:false, order:6 },
     { id:"w7", title:"Portrait 04", date:"2025", medium:"Ink on paper", category:"Portrait", collection:"c3",
       tags:["portrait","ink","people"], referenceType:"Friend", referenceName:"", description:"Ink doesn't forgive mistakes, which is exactly why this one was drawn in it.",
-      image:"assets/works/work-07.svg", featured:false, hidden:false, order:7 },
+      image:"assets/works/work-07.svg", refImage:"assets/refs/ref-07.svg", featured:false, hidden:false, order:7 },
     { id:"w8", title:"Self Study 02", date:"2024", medium:"Graphite on paper", category:"Self", collection:"c2",
       tags:["self-portrait","graphite"], referenceType:"Self", referenceName:"", description:"Second self-portrait in the collection, drawn a year before the first was finished.",
-      image:"assets/works/work-08.svg", featured:false, hidden:false, order:8 },
+      image:"assets/works/work-08.svg", refImage:"assets/refs/ref-08.svg", featured:false, hidden:false, order:8 },
     { id:"w9", title:"Portrait 03", date:"2024", medium:"Graphite on paper", category:"Portrait", collection:"c5",
       tags:["portrait","graphite","archive"], referenceType:"Personal", referenceName:"", description:"An early piece, kept in the archive as a record of where the line work started.",
-      image:"assets/works/work-09.svg", featured:false, hidden:false, order:9 },
+      image:"assets/works/work-09.svg", refImage:"assets/refs/ref-09.svg", featured:false, hidden:false, order:9 },
     { id:"w10", title:"Eyes, Study I", date:"2024", medium:"Pencil on paper", category:"Study", collection:"c4",
       tags:["study","eyes","pencil"], referenceType:"Personal", referenceName:"", description:"The first of many attempts to draw an eye that actually looks back.",
-      image:"assets/works/work-10.svg", featured:false, hidden:false, order:10 },
+      image:"assets/works/work-10.svg", refImage:"assets/refs/ref-10.svg", featured:false, hidden:false, order:10 },
     { id:"w11", title:"Portrait 02", date:"2024", medium:"Charcoal on paper", category:"Portrait", collection:"c5",
       tags:["portrait","charcoal","archive"], referenceType:"Someone admired", referenceName:"", description:"An early portrait, heavier in charcoal than anything made since.",
-      image:"assets/works/work-11.svg", featured:false, hidden:false, order:11 },
+      image:"assets/works/work-11.svg", refImage:"assets/refs/ref-11.svg", featured:false, hidden:false, order:11 },
     { id:"w12", title:"Portrait 01", date:"2023", medium:"Graphite on paper", category:"Portrait", collection:"c5",
       tags:["portrait","graphite","first"], referenceType:"Personal", referenceName:"", description:"The first drawing in the collection. Everything else grew out of this one.",
-      image:"assets/works/work-12.svg", featured:false, hidden:false, order:12 }
+      image:"assets/works/work-12.svg", refImage:"assets/refs/ref-12.svg", featured:false, hidden:false, order:12 }
   ]
 };
 
 class NerusonStoreImpl {
-  constructor(){ this._data = this._load(); }
+  constructor(){
+    // Paint instantly with defaults, then swap in real content once
+    // Supabase responds — main.js re-renders automatically on
+    // "neruson:change", so this needs no special handling elsewhere.
+    this._data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    this.ready = this._init();
+  }
 
-  _load(){
+  async _init(){
     try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw){
-        const parsed = JSON.parse(raw);
-        // backfill fields added in later versions (e.g. siteText) so upgrading
-        // never blanks out content that predates this version of the store.
-        parsed.settings = parsed.settings || {};
-        parsed.settings.siteText = { ...DEFAULT_DATA.settings.siteText, ...(parsed.settings.siteText||{}) };
-        return parsed;
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/site_content?id=eq.main&select=data`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if(!res.ok) throw new Error("Supabase read failed: " + res.status);
+      const rows = await res.json();
+      if(rows && rows[0] && rows[0].data){
+        const remote = rows[0].data;
+        // backfill fields added in later versions so upgrading never
+        // blanks out content saved before this version of the store.
+        remote.settings = remote.settings || {};
+        remote.settings.siteText = { ...DEFAULT_DATA.settings.siteText, ...(remote.settings.siteText||{}) };
+        this._data = remote;
+        window.dispatchEvent(new CustomEvent("neruson:change"));
+      } else {
+        // First run — no row in Supabase yet. Seed it with the defaults
+        // so the dashboard and site agree on a starting point.
+        this._persist(this._data);
       }
-    }catch(e){ console.warn("Neruson store: could not read localStorage", e); }
-    const seeded = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    this._save(seeded);
-    return seeded;
+    }catch(e){
+      console.warn("Neruson store: could not reach Supabase, showing local defaults.", e);
+    }
+  }
+
+  async _persist(data){
+    try{
+      const res = await fetch("/api/content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data })
+      });
+      if(!res.ok) throw new Error("Save failed: " + res.status);
+    }catch(e){
+      console.error("Neruson store: could not save to Supabase.", e);
+      window.dispatchEvent(new CustomEvent("neruson:savefail", { detail: e }));
+    }
   }
 
   _save(data){
     this._data = data;
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-    catch(e){ console.warn("Neruson store: could not write localStorage", e); }
     window.dispatchEvent(new CustomEvent("neruson:change"));
+    this._persist(data); // fire-and-forget; failures surface via neruson:savefail
   }
 
   // ---- reads ----

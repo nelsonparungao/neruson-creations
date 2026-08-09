@@ -26,6 +26,8 @@
     setupWorkModal();
     setupToolbar();
     setupHeaderActions();
+    window.addEventListener("neruson:savefail", () =>
+      toast("⚠ Could not save — check your connection and try again."));
   }
 
   function renderBrand(){
