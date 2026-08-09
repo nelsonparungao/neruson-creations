@@ -162,6 +162,20 @@
       <div><h2>Site &amp; Social</h2><p>Global site settings, hero artwork, footer phrase, and social links.</p></div>
     </div>
     <form class="admin-form" id="settingsForm">
+      <h3 class="admin-subhead">Logo</h3>
+      <p class="hint" style="margin:-8px 0 4px;">Upload any photo to replace the "NERUSON CREATIONS" text in the top-left corner with a circular logo. Leave empty to keep using the text.</p>
+      <div class="logo-field">
+        <div class="logo-preview-wrap">
+          <img id="logoPreview" src="" alt="" hidden>
+          <span id="logoPreviewEmpty" class="logo-preview-empty">Text&nbsp;logo</span>
+        </div>
+        <div class="logo-field-actions">
+          <label class="ghost-btn small" for="logoInput">Upload logo image</label>
+          <input type="file" id="logoInput" accept="image/*" hidden>
+          <button type="button" class="text-btn danger" id="clearLogoBtn">Remove logo (use text instead)</button>
+        </div>
+      </div>
+
       <div class="form-grid">
         <label>Artist name (line 1 of the logo)
           <input type="text" name="artistName">

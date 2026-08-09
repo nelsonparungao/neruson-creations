@@ -48,6 +48,20 @@
     const s = store.settings();
     $$(".js-artist-name").forEach(el => el.textContent = s.artistName.toUpperCase());
     $$(".js-brand-line").forEach(el => el.textContent = s.brandLine.toUpperCase());
+
+    const logo = $(".js-nav-logo");
+    const mark = $(".js-nav-mark");
+    if(logo && mark){
+      if(s.logoImage){
+        logo.src = s.logoImage;
+        logo.alt = s.artistName;
+        logo.hidden = false;
+        mark.classList.add("has-logo");
+      } else {
+        logo.hidden = true;
+        mark.classList.remove("has-logo");
+      }
+    }
   }
 
   /* -------------------------------------------------- page text (headings, intros, meta) -------------------------------------------------- */

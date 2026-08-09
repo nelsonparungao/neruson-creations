@@ -362,6 +362,9 @@
     form.heroArtworkId.innerHTML = store.works({ includeHidden:true }).map(w =>
       `<option value="${w.id}" ${w.id===s.heroArtworkId?"selected":""}>${escapeHTML(w.title)}</option>`).join("");
 
+    renderLogoPreview();
+    setupLogoField();
+
     form.onsubmit = (e) => {
       e.preventDefault();
       const fd = new FormData(form);
@@ -388,6 +391,33 @@
         store.resetToDefaults();
         location.reload();
       }
+    });
+  }
+
+  function renderLogoPreview(){
+    const s = store.settings();
+    const img = $("#logoPreview");
+    const empty = $("#logoPreviewEmpty");
+    if(s.logoImage){
+      img.src = s.logoImage; img.hidden = false; empty.hidden = true;
+    } else {
+      img.hidden = true; empty.hidden = false;
+    }
+  }
+
+  function setupLogoField(){
+    $("#logoInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      const dataUrl = await readAsDataURL(file);
+      store.updateSettings({ logoImage: dataUrl });
+      renderLogoPreview();
+      toast("Logo updated — showing on the site now.");
+    });
+    $("#clearLogoBtn").addEventListener("click", () => {
+      if(!store.settings().logoImage) return;
+      store.updateSettings({ logoImage: "" });
+      renderLogoPreview();
+      toast("Logo removed — back to the text mark.");
     });
   }
 

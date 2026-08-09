@@ -98,6 +98,17 @@
 .checkbox{ flex-direction:row !important; align-items:center; gap:8px !important; }
 .checkbox input{ width:auto; }
 .admin-subhead{ font-family:var(--f-display); font-size:20px; font-weight:500; margin:10px 0 -4px; }
+
+.logo-field{ display:flex; align-items:center; gap:16px; }
+.logo-preview-wrap{
+  width:64px; height:64px; border-radius:50%; overflow:hidden; flex-shrink:0;
+  background:var(--paper-dim); border:1px solid rgba(11,11,10,.2);
+  display:flex; align-items:center; justify-content:center;
+}
+.logo-preview-wrap img{ width:100%; height:100%; object-fit:cover; }
+.logo-preview-empty{ font-family:var(--f-mono); font-size:8px; letter-spacing:.06em; text-transform:uppercase; color:var(--mid); text-align:center; line-height:1.4; padding:4px; }
+.logo-field-actions{ display:flex; flex-direction:column; gap:8px; align-items:flex-start; }
+.logo-field-actions .ghost-btn.small{ width:auto; }
 .danger-zone{ margin-top:60px; padding-top:24px; border-top:1px solid rgba(11,11,10,.14); max-width:520px; }
 .danger-zone p{ color:var(--mid); font-size:13px; margin:6px 0 14px; }
 
