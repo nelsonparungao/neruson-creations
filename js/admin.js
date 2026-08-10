@@ -171,7 +171,7 @@
     if(!files.length) return;
     let done = 0;
     files.forEach((file, i) => {
-      readAsDataURL(file).then(dataUrl => {
+      compressImage(file).then(dataUrl => {
         const id = "w" + Date.now() + "_" + i;
         store.upsertWork({
           id, title: "Untitled Drawing", date: String(new Date().getFullYear()),
@@ -198,6 +198,37 @@
     });
   }
 
+  // Vercel serverless functions reject request bodies over ~4.5MB, and
+  // every save resends the *entire* site content object as one JSON blob
+  // (see data.js _persist). An uncompressed phone photo easily blows past
+  // that limit on its own, which is why uploads (logo, about portrait,
+  // artwork images) can silently fail. Resize + re-encode as JPEG before
+  // ever turning a file into a stored data URL.
+  function compressImage(file, { maxDim = 1600, quality = 0.82 } = {}){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        img.onerror = reject;
+        img.onload = () => {
+          let { width, height } = img;
+          if(width > maxDim || height > maxDim){
+            if(width >= height){ height = Math.round(height * (maxDim / width)); width = maxDim; }
+            else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   /* -------------------------------------------------- work modal -------------------------------------------------- */
   let pendingImage = null, pendingRef = null, clearRef = false;
 
@@ -208,12 +239,12 @@
 
     $("#workImgInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      pendingImage = await readAsDataURL(file);
+      pendingImage = await compressImage(file);
       $("#workImgPreview").src = pendingImage;
     });
     $("#workRefInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      pendingRef = await readAsDataURL(file); clearRef = false;
+      pendingRef = await compressImage(file); clearRef = false;
       $("#workRefPreview").src = pendingRef;
       $("#refPreviewWrap").hidden = false;
     });
@@ -357,7 +388,7 @@
 
     $("#aboutPortraitInput").onchange = async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await readAsDataURL(file);
+      const dataUrl = await compressImage(file);
       store.updateSettings({ aboutPortraitImage: dataUrl });
       renderAboutPortraitPreview();
       toast("Portrait updated — showing on the site now.");
@@ -519,7 +550,7 @@
   function setupLogoField(){
     $("#logoInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await readAsDataURL(file);
+      const dataUrl = await compressImage(file, { maxDim: 600, quality: 0.85 });
       store.updateSettings({ logoImage: dataUrl });
       renderLogoPreview();
       toast("Logo updated — showing on the site now.");

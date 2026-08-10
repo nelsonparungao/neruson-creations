@@ -1,4 +1,9 @@
 // Vercel serverless function — /api/comments
+// NOTE: this file must be named comments.js (plural) inside /api/ — Vercel
+// routes /api/comments to whatever file matches that name. It was
+// previously deployed as comment.js (singular), which made every delete
+// request 404 since admin.js calls /api/comments.
+//
 // Public visitors post and read comments by talking to Supabase directly
 // with the anon key (see js/data.js) — Row Level Security lets that key
 // INSERT and SELECT on the comments table, but never UPDATE or DELETE.
