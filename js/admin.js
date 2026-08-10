@@ -14,7 +14,18 @@
 
   document.addEventListener("DOMContentLoaded", init);
 
-  function init(){
+  async function init(){
+    // Wait for the real Supabase content to load before rendering or wiring
+    // up ANY interaction (upload, edit, toggle, etc). Without this, the
+    // dashboard paints the store's built-in placeholder defaults first
+    // (they're set synchronously so main.js has something to show
+    // instantly) and, if you touch anything before the real fetch
+    // resolves, you save those placeholders — merged with your edit —
+    // back over your real Supabase content.
+    showLoadingState(true);
+    await store.ready;
+    showLoadingState(false);
+
     renderBrand();
     setupTabs();
     renderWorkList();
@@ -28,6 +39,23 @@
     setupHeaderActions();
     window.addEventListener("neruson:savefail", () =>
       toast("⚠ Could not save — check your connection and try again."));
+
+    // Keep the artwork list honest if content changes from elsewhere
+    // (another tab/device, or an import). Deliberately does NOT touch
+    // the modal or the other tab's forms so it can't wipe out something
+    // you're mid-way through typing.
+    window.addEventListener("neruson:change", () => renderWorkList());
+  }
+
+  function showLoadingState(isLoading){
+    const list = $("#workList");
+    const drop = $("#uploadDrop");
+    if(isLoading){
+      list.innerHTML = `<p style="padding:40px 0;color:var(--mid);font-size:13px;">Loading your content from Supabase…</p>`;
+      if(drop) drop.style.pointerEvents = "none", drop.style.opacity = "0.5";
+    } else if(drop){
+      drop.style.pointerEvents = ""; drop.style.opacity = "";
+    }
   }
 
   function renderBrand(){
