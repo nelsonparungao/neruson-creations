@@ -10,7 +10,7 @@
 
 :root{
   --ink:#0b0b0a;
-  --ink-soft:#171613;
+  --ink-soft:#1a1a1a;
   --paper:#f1efe6;
   --paper-dim:#e7e3d6;
   --mid:#77746a;
@@ -254,20 +254,18 @@ section{ position:relative; }
 
 /* ---------------- heart / like button ---------------- */
 .heart-btn{
-  position:absolute; top:12px; right:12px; z-index:2;
+  position:absolute; bottom:12px; right:12px; z-index:2;
   display:flex; align-items:center; gap:6px;
-  padding:7px 11px; background:rgba(11,11,10,.55); backdrop-filter:blur(4px);
-  border:1px solid rgba(241,239,230,.3); color:var(--paper);
+  padding:7px 11px; background:rgba(11,11,10,.28); backdrop-filter:blur(3px);
+  border:1px solid rgba(241,239,230,.28); color:var(--paper);
   font-family:var(--f-mono); font-size:12px; letter-spacing:.02em;
   cursor:pointer; transition:background .25s var(--ease), border-color .25s var(--ease), transform .2s var(--ease);
 }
-.heart-btn:hover{ border-color:var(--paper); }
+.heart-btn:hover{ border-color:var(--paper); background:rgba(11,11,10,.4); }
 .heart-btn:active{ transform:scale(.94); }
 .heart-btn.liked{ background:var(--paper); color:var(--ink); border-color:var(--paper); }
 .heart-btn .heart-icon{ font-size:14px; line-height:1; }
 .heart-btn .heart-count{ min-width:9px; text-align:left; }
-.lightbox-info .heart-btn{ position:static; align-self:flex-start; margin-top:6px; background:transparent; color:var(--paper-on-ink-soft); border-color:var(--line-strong); }
-.lightbox-info .heart-btn.liked{ background:var(--paper); color:var(--ink); border-color:var(--paper); }
 
 /* ---------------- filter bar ---------------- */
 .filter-bar{
@@ -282,7 +280,7 @@ section{ position:relative; }
 .filter-chip.active{ background:var(--paper); color:var(--ink); border-color:var(--paper); }
 
 /* ---------------- latest / split ---------------- */
-.latest{ padding:130px 0; border-top:1px solid var(--line); }
+.latest{ padding:130px 0; border-top:1px solid var(--line); background:var(--ink-soft); }
 .latest-grid{ display:grid; grid-template-columns:1fr; gap:48px; }
 @media(min-width:900px){ .latest-grid{ grid-template-columns:1.15fr .85fr; gap:64px; align-items:center; } }
 .latest-media{ overflow:hidden; position:relative; }
@@ -319,7 +317,7 @@ section{ position:relative; }
 .coll-card .ccount{ position:absolute; top:26px; right:28px; z-index:2; font-family:var(--f-mono); font-size:11px; color:var(--paper-on-ink-soft); }
 
 /* ---------------- about ---------------- */
-.about{ padding:130px 0; border-top:1px solid var(--line); }
+.about{ padding:130px 0; border-top:1px solid var(--line); background:var(--ink-soft); }
 .about-grid{ display:grid; grid-template-columns:1fr; gap:56px; }
 @media(min-width:900px){ .about-grid{ grid-template-columns:.7fr 1.3fr; gap:80px; } }
 .about-portrait{ overflow:hidden; }
@@ -433,6 +431,7 @@ section{ position:relative; }
 
 /* ---------------- contact ---------------- */
 .contact{ padding:150px 0 90px; border-top:1px solid var(--line); }
+#archive{ background:var(--ink-soft); }
 .contact-title{ font-family:var(--f-display); font-weight:600; font-size:clamp(48px,10vw,140px); text-transform:uppercase; margin:0 0 50px; letter-spacing:-.03em; }
 .contact-links{ display:flex; flex-direction:column; }
 .contact-link{
@@ -444,29 +443,143 @@ section{ position:relative; }
 .contact-link .arrow{ font-family:var(--f-mono); font-size:14px; }
 
 /* ---------------- guestbook ---------------- */
-.guestbook{ padding:130px 0 150px; border-top:1px solid var(--line); }
-.guestbook-form{
-  display:flex; flex-direction:column; gap:14px; max-width:560px; margin:0 0 60px;
+.guestbook{ padding:0 0 150px; background:var(--ink-soft); overflow:hidden; }
+
+/* ---------------- small dot-grid texture accent ---------------- */
+/* A soft-edged patch of dots layered behind a section's content — not
+   a full background, just a bit of texture in one corner. Purely
+   decorative (::before), so it never needs any HTML changes beyond
+   adding the "dots-accent" class to a section. */
+.dots-accent{ position:relative; overflow:hidden; }
+.dots-accent::before{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(rgba(241,239,230,.16) 1px, transparent 1.4px);
+  background-size:20px 20px;
+  -webkit-mask-image:radial-gradient(ellipse 60% 70% at 82% 20%, #000 0%, transparent 70%);
+  mask-image:radial-gradient(ellipse 60% 70% at 82% 20%, #000 0%, transparent 70%);
 }
+.dots-accent > *{ position:relative; z-index:1; }
+
+/* a second, brighter patch of dots that follows the cursor — only lights
+   up on hover, layered on top of the base .dots-accent texture */
+.dots-hover::after{
+  content:""; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(rgba(241,239,230,.85) 1px, transparent 1.4px);
+  background-size:20px 20px;
+  opacity:0;
+  -webkit-mask-image:radial-gradient(circle 150px at var(--mx,50%) var(--my,50%), #000 0%, transparent 70%);
+  mask-image:radial-gradient(circle 150px at var(--mx,50%) var(--my,50%), #000 0%, transparent 70%);
+  transition:opacity .35s var(--ease);
+}
+.dots-hover:hover::after{ opacity:1; }
+/* ---- layout: postcard (left) + pinboard wall (right) ---- */
+.gb-board{
+  display:grid; grid-template-columns:minmax(300px,380px) 1fr; gap:56px;
+  align-items:start; padding-top:64px; position:relative;
+}
+.gb-board::before{
+  /* cork/paper texture wash behind the whole board */
+  content:''; position:absolute; inset:-40px -40px auto -40px; height:1px;
+}
+
+/* ---- the postcard form ---- */
+.gb-postcard{ position:sticky; top:calc(var(--nav-h) + 24px); }
+.gb-postcard-inner{
+  position:relative; background:var(--paper); color:var(--ink);
+  padding:38px 32px 32px; transform:rotate(-1.6deg);
+  box-shadow:0 22px 50px rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.06);
+  transition:transform .4s var(--ease);
+}
+.gb-postcard-inner:hover{ transform:rotate(-.4deg) translateY(-3px); }
+.gb-postcard-inner::after{
+  /* torn/deckled bottom edge */
+  content:''; position:absolute; left:0; right:0; bottom:-1px; height:10px;
+  background:
+    linear-gradient(135deg, var(--paper) 50%, transparent 51%) 0 0/10px 10px repeat-x,
+    linear-gradient(-135deg, var(--paper) 50%, transparent 51%) 0 0/10px 10px repeat-x;
+}
+.gb-postcard-tape{
+  position:absolute; top:-16px; left:50%; width:96px; height:30px; margin-left:-48px;
+  background:rgba(241,239,230,.5);
+  border:1px solid rgba(11,11,10,.08);
+  box-shadow:0 4px 10px rgba(0,0,0,.2);
+  transform:rotate(-3deg);
+}
+.gb-postcard-mark{
+  position:absolute; top:18px; right:24px; font-family:var(--f-display); font-size:22px;
+  color:var(--line-strong); transform:rotate(8deg);
+}
+.gb-postcard-head{ margin-bottom:22px; padding-right:36px; }
+.gb-postcard-eyebrow{
+  display:block; font-family:var(--f-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--mid); margin-bottom:6px;
+}
+.gb-postcard-title{
+  font-family:var(--f-display); font-weight:600; font-size:28px; letter-spacing:-.02em; margin:0;
+}
+.guestbook-form{ display:flex; flex-direction:column; gap:18px; }
+.gb-field{ display:flex; flex-direction:column; gap:6px; }
+.gb-field-label{
+  font-family:var(--f-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--mid);
+}
+.gb-field-label em{ font-style:normal; opacity:.65; text-transform:none; letter-spacing:0; }
 .guestbook-form input, .guestbook-form textarea{
-  font-family:var(--f-body); font-size:14px; color:var(--paper);
-  background:transparent; border:1px solid var(--line-strong); padding:13px 15px; resize:vertical;
+  font-family:var(--f-body); font-size:15px; color:var(--ink);
+  background:transparent; border:none; border-bottom:1px solid var(--line-strong);
+  padding:8px 2px; resize:vertical; transition:border-color .25s;
 }
-.guestbook-form input::placeholder, .guestbook-form textarea::placeholder{ color:var(--paper-on-ink-soft); }
-.guestbook-form input:focus, .guestbook-form textarea:focus{ outline:none; border-color:var(--paper); }
+.guestbook-form textarea{ font-family:'Space Grotesk', var(--f-body); line-height:1.5; }
+.guestbook-form input::placeholder, .guestbook-form textarea::placeholder{ color:var(--mid); }
+.guestbook-form input:focus, .guestbook-form textarea:focus{ outline:none; border-color:var(--ink); }
 .gb-submit{
-  align-self:flex-start; font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
-  padding:13px 26px; background:var(--paper); color:var(--ink); border:1px solid var(--paper); cursor:pointer; transition:opacity .25s;
+  align-self:flex-start; display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  padding:14px 22px; background:var(--ink); color:var(--paper); border:1px solid var(--ink); cursor:pointer;
+  margin-top:6px; transition:transform .25s var(--ease), background .25s, color .25s;
 }
-.gb-submit:hover{ opacity:.82; }
-.gb-submit:disabled{ opacity:.5; cursor:default; }
-.guestbook-list{ display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); max-width:720px; }
-.gb-note{ background:var(--ink); padding:20px 22px; }
-.gb-note-head{ display:flex; justify-content:space-between; gap:14px; margin-bottom:8px; }
+.gb-submit span{ transition:transform .25s var(--ease); }
+.gb-submit:hover{ background:transparent; color:var(--ink); }
+.gb-submit:hover span{ transform:translateX(-2px); }
+.gb-submit:disabled{ opacity:.45; cursor:default; }
+
+/* ---- the wall of pinned notes ---- */
+.gb-wall-label{
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--paper-on-ink-soft); border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:34px;
+}
+.gb-wall-count::before{ content:'· '; }
+.gb-wall-count:empty::before{ content:none; }
+.guestbook-list{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:28px 22px; align-items:start;
+}
+.gb-note{
+  position:relative; background:var(--ink); border:1px solid var(--line); padding:24px 20px 20px;
+  transform:rotate(var(--tilt,0deg)); transition:transform .3s var(--ease), border-color .3s;
+}
+.gb-note:nth-child(4n+1){ --tilt:-1.4deg; }
+.gb-note:nth-child(4n+2){ --tilt:1.1deg; }
+.gb-note:nth-child(4n+3){ --tilt:-.6deg; }
+.gb-note:nth-child(4n+4){ --tilt:1.6deg; }
+.gb-note:hover{ transform:rotate(0deg) translateY(-4px); border-color:var(--line-strong); z-index:2; }
+.gb-note::before{
+  /* pin */
+  content:''; position:absolute; top:-6px; left:20px; width:9px; height:9px; border-radius:50%;
+  background:var(--paper); box-shadow:0 3px 5px rgba(0,0,0,.4);
+}
+.gb-note-head{ display:flex; justify-content:space-between; align-items:baseline; gap:14px; margin-bottom:10px; }
 .gb-name{ font-family:var(--f-display); font-size:14px; font-weight:500; }
 .gb-date{ font-family:var(--f-mono); font-size:10px; color:var(--paper-on-ink-soft); letter-spacing:.06em; white-space:nowrap; }
 .gb-message{ font-size:14px; line-height:1.7; color:var(--paper-on-ink-soft); font-weight:300; white-space:pre-wrap; }
-.gb-empty{ color:var(--paper-on-ink-soft); font-size:13px; font-family:var(--f-mono); }
+.gb-empty{
+  grid-column:1/-1; color:var(--paper-on-ink-soft); font-size:13px; font-family:var(--f-mono);
+  border:1px dashed var(--line-strong); padding:30px; text-align:center;
+}
+
+@media(max-width:900px){
+  .gb-board{ grid-template-columns:1fr; gap:64px; }
+  .gb-postcard{ position:static; max-width:420px; }
+}
 
 /* ---------------- footer ---------------- */
 footer{ padding:50px 0 40px; }

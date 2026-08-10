@@ -95,7 +95,7 @@
   </section>
 
   <!-- ============================ COLLECTIONS ============================ -->
-  <section class="collections wrap">
+  <section class="collections wrap dots-accent dots-hover">
     <div class="section-head reveal">
       <div>
         <span class="num eyebrow js-collections-eyebrow">03 — Collections</span>
@@ -107,7 +107,7 @@
   </section>
 
   <!-- ============================ ABOUT ============================ -->
-  <section id="about" class="about wrap js-about">
+  <section id="about" class="about wrap js-about dots-accent dots-hover">
     <div class="about-grid">
       <div class="about-portrait reveal">
         <img class="js-about-img" src="" alt="Self portrait">
@@ -122,7 +122,7 @@
   </section>
 
   <!-- ============================ PROCESS ============================ -->
-  <section class="process wrap">
+  <section class="process wrap dots-accent dots-hover">
     <div class="reveal">
       <span class="eyebrow js-process-eyebrow">05 — Process</span>
       <h2 class="section-title js-process-title">From Reference to Drawing</h2>
@@ -160,20 +160,45 @@
   </section>
 
   <!-- ============================ GUESTBOOK ============================ -->
-  <section id="guestbook" class="guestbook wrap">
-    <div class="section-head reveal">
-      <div>
-        <span class="num eyebrow">07 — Guestbook</span>
-        <h2 class="section-title">Leave a Note</h2>
+  <section id="guestbook" class="guestbook dots-accent dots-hover">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div>
+          <span class="num eyebrow">07 — Guestbook</span>
+          <h2 class="section-title">Leave a Note</h2>
+        </div>
+        <p class="section-note">A shared wall — anything you leave here is visible to every visitor.</p>
       </div>
-      <p class="section-note">A shared wall — anything you leave here is visible to every visitor.</p>
     </div>
-    <form class="guestbook-form reveal" id="guestbookForm">
-      <input type="text" name="name" maxlength="80" placeholder="Name (optional)">
-      <textarea name="message" rows="3" maxlength="2000" required placeholder="Say something…"></textarea>
-      <button class="gb-submit" type="submit">Post note</button>
-    </form>
-    <div class="guestbook-list reveal js-guestbook-list"></div>
+
+    <div class="gb-board wrap">
+      <div class="gb-postcard reveal">
+        <div class="gb-postcard-inner">
+          <span class="gb-postcard-mark">✎</span>
+          <div class="gb-postcard-head">
+            <span class="gb-postcard-eyebrow">Pin something to the wall</span>
+            <h3 class="gb-postcard-title">Say hello</h3>
+          </div>
+          <form class="guestbook-form" id="guestbookForm">
+            <label class="gb-field">
+              <span class="gb-field-label">Name <em>(optional)</em></span>
+              <input type="text" name="name" maxlength="80" placeholder="Anonymous">
+            </label>
+            <label class="gb-field">
+              <span class="gb-field-label">Message</span>
+              <textarea name="message" rows="4" maxlength="2000" required placeholder="What brings you here?"></textarea>
+            </label>
+            <button class="gb-submit" type="submit"><span>Pin it to the wall</span> →</button>
+          </form>
+          <span class="gb-postcard-tape" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="gb-wall reveal">
+        <div class="gb-wall-label"><span>The Wall</span><span class="gb-wall-count js-gb-count"></span></div>
+        <div class="guestbook-list js-guestbook-list"></div>
+      </div>
+    </div>
   </section>
 
 </main>
@@ -203,6 +228,9 @@
         <div class="lb-heart-pop" aria-hidden="true">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
         </div>
+        <button class="heart-btn lb-heart" data-like="" aria-label="Like this piece">
+          <span class="heart-icon">♡</span><span class="heart-count">0</span>
+        </button>
         <button class="lightbox-nav-btn next js-lb-next" aria-label="Next">→</button>
       </div>
       <div class="lightbox-info">
@@ -210,9 +238,6 @@
         <div class="lt-meta js-lb-meta"></div>
         <p class="lt-desc js-lb-desc"></p>
         <div class="lt-tags js-lb-tags"></div>
-        <button class="heart-btn lb-heart" data-like="" aria-label="Like this piece">
-          <span class="heart-icon">♡</span><span class="heart-count">0</span>
-        </button>
       </div>
     </div>
     <div class="lightbox-bottom">Use ← → to navigate · ESC to close</div>

@@ -41,6 +41,7 @@
     setupGuestbookForm();
     renderGuestbook();
     setupLightboxDoubleTap();
+    setupDotHover();
   }
 
   function renderAll(){
@@ -626,5 +627,16 @@
 
   function escapeHTML(str){
     return String(str ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  }
+
+  /* -------------------------------------------------- hoverable dot texture -------------------------------------------------- */
+  function setupDotHover(){
+    $$(".dots-hover").forEach(el => {
+      el.addEventListener("mousemove", (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty("--mx", `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty("--my", `${((e.clientY - r.top) / r.height) * 100}%`);
+      });
+    });
   }
 })();
