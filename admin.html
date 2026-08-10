@@ -82,9 +82,18 @@
       <label>Artist statement <span class="hint">Separate paragraphs with a blank line.</span>
         <textarea name="aboutText" rows="8"></textarea>
       </label>
-      <label>Portrait / self-portrait
-        <select name="aboutPortraitId"></select>
-      </label>
+      <label>Portrait / self-portrait</label>
+      <div class="logo-field">
+        <div class="logo-preview-wrap">
+          <img id="aboutPortraitPreview" src="" alt="" hidden>
+          <span id="aboutPortraitPreviewEmpty" class="logo-preview-empty">No&nbsp;photo</span>
+        </div>
+        <div class="logo-field-actions">
+          <label class="ghost-btn small" for="aboutPortraitInput">Upload photo</label>
+          <input type="file" id="aboutPortraitInput" accept="image/*" hidden>
+          <button type="button" class="text-btn danger" id="clearAboutPortraitBtn">Remove photo</button>
+        </div>
+      </div>
       <button class="solid-btn" type="submit">Save about section</button>
     </form>
   </section>

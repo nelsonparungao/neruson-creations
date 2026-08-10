@@ -218,8 +218,13 @@
     const s = store.settings();
     $(".js-about-title", wrap).textContent = s.aboutTitle;
     $(".js-about-text", wrap).innerHTML = s.aboutText.split(/\n{2,}/).map(p => `<p>${escapeHTML(p)}</p>`).join("");
-    const portrait = store.workById(s.aboutPortraitId);
-    if(portrait) { $(".js-about-img", wrap).src = portrait.image; $(".js-about-img", wrap).alt = portrait.title; }
+    if(s.aboutPortraitImage){
+      $(".js-about-img", wrap).src = s.aboutPortraitImage;
+      $(".js-about-img", wrap).alt = s.aboutTitle || "Portrait";
+    } else {
+      const portrait = store.workById(s.aboutPortraitId);
+      if(portrait) { $(".js-about-img", wrap).src = portrait.image; $(".js-about-img", wrap).alt = portrait.title; }
+    }
   }
 
   /* -------------------------------------------------- process compare -------------------------------------------------- */

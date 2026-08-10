@@ -337,19 +337,43 @@
     const form = $("#aboutForm");
     form.aboutTitle.value = s.aboutTitle;
     form.aboutText.value = s.aboutText;
-    form.aboutPortraitId.innerHTML = store.works({ includeHidden:true }).map(w =>
-      `<option value="${w.id}" ${w.id===s.aboutPortraitId?"selected":""}>${escapeHTML(w.title)}</option>`).join("");
+
+    renderAboutPortraitPreview();
 
     form.onsubmit = (e) => {
       e.preventDefault();
       const fd = new FormData(form);
       store.updateSettings({
         aboutTitle: fd.get("aboutTitle"),
-        aboutText: fd.get("aboutText"),
-        aboutPortraitId: fd.get("aboutPortraitId")
+        aboutText: fd.get("aboutText")
       });
       toast("About section saved.");
     };
+
+    $("#aboutPortraitInput").onchange = async (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      const dataUrl = await readAsDataURL(file);
+      store.updateSettings({ aboutPortraitImage: dataUrl });
+      renderAboutPortraitPreview();
+      toast("Portrait updated — showing on the site now.");
+    };
+    $("#clearAboutPortraitBtn").onclick = () => {
+      if(!store.settings().aboutPortraitImage) return;
+      store.updateSettings({ aboutPortraitImage: "" });
+      renderAboutPortraitPreview();
+      toast("Portrait removed.");
+    };
+  }
+
+  function renderAboutPortraitPreview(){
+    const s = store.settings();
+    const img = $("#aboutPortraitPreview");
+    const empty = $("#aboutPortraitPreviewEmpty");
+    if(s.aboutPortraitImage){
+      img.src = s.aboutPortraitImage; img.hidden = false; empty.hidden = true;
+    } else {
+      img.hidden = true; empty.hidden = false;
+    }
   }
 
   /* -------------------------------------------------- page text tab -------------------------------------------------- */
