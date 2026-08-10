@@ -204,27 +204,50 @@
     drop.addEventListener("drop", e => handleFiles(e.dataTransfer.files));
   }
 
-  function handleFiles(fileList){
+  // Crops (or lets the user skip cropping) each dropped/selected file one
+  // at a time, so only one cropper dialog is ever open at once, then adds
+  // each as a new draft artwork.
+  async function handleFiles(fileList){
     const files = Array.from(fileList || []).filter(f => f.type.startsWith("image/"));
     if(!files.length) return;
-    let done = 0;
-    files.forEach((file, i) => {
-      compressImage(file).then(dataUrl => {
-        const id = "w" + Date.now() + "_" + i;
-        store.upsertWork({
-          id, title: "Untitled Drawing", date: String(new Date().getFullYear()),
-          medium: "Graphite on paper", category: "Portrait", collection: store.collections()[0]?.id || "",
-          tags: [], referenceType: "Personal", referenceName: "", description: "",
-          image: dataUrl, refImage: "", featured: false, hidden: false
-        });
-        done++;
-        if(done === files.length){
-          renderWorkList();
-          toast(files.length > 1 ? `${files.length} drawings added — fill in their details below.` : "Drawing added — fill in its details.");
-          if(files.length === 1) openWorkModal(id);
-        }
+    let added = 0;
+    let lastId = null;
+    for(let i = 0; i < files.length; i++){
+      const file = files[i];
+      const dataUrl = await cropThenCompress(file, {
+        title: files.length > 1 ? `Crop artwork (${i+1} of ${files.length})` : "Crop artwork",
+        aspect: "native",
+        outputWidth: 1600,
+        outputHeight: 1600
       });
-    });
+      if(dataUrl === null) continue; // user cancelled this one
+      const id = "w" + Date.now() + "_" + i;
+      store.upsertWork({
+        id, title: "Untitled Drawing", date: String(new Date().getFullYear()),
+        medium: "Graphite on paper", category: "Portrait", collection: store.collections()[0]?.id || "",
+        tags: [], referenceType: "Personal", referenceName: "", description: "",
+        image: dataUrl, refImage: "", featured: false, hidden: false
+      });
+      added++;
+      lastId = id;
+    }
+    if(added){
+      renderWorkList();
+      toast(added > 1 ? `${added} drawings added — fill in their details below.` : "Drawing added — fill in its details.");
+      if(added === 1) openWorkModal(lastId);
+    }
+  }
+
+  // Opens the cropper for a file; resolves the cropped data URL, the
+  // fallback compressed image if the user chose "Use original", or null
+  // if they cancelled entirely. Falls back to plain compression if the
+  // cropper script hasn't loaded for some reason.
+  async function cropThenCompress(file, cropOpts, fallback = compressImage){
+    if(typeof window.openImageCropper !== "function") return fallback(file);
+    const result = await window.openImageCropper(file, cropOpts);
+    if(result === null) return null;
+    if(result === "skip") return fallback(file);
+    return result;
   }
 
   // Crops to a centered square, clips it to a rounded-rect path, and
@@ -333,12 +356,18 @@
 
     $("#workImgInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      pendingImage = await compressImage(file);
+      const dataUrl = await cropThenCompress(file, { title: "Crop artwork", aspect: "native", outputWidth: 1600, outputHeight: 1600 });
+      e.target.value = "";
+      if(dataUrl === null) return;
+      pendingImage = dataUrl;
       $("#workImgPreview").src = pendingImage;
     });
     $("#workRefInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      pendingRef = await compressImage(file); clearRef = false;
+      const dataUrl = await cropThenCompress(file, { title: "Crop reference photo", aspect: "native", outputWidth: 1600, outputHeight: 1600 });
+      e.target.value = "";
+      if(dataUrl === null) return;
+      pendingRef = dataUrl; clearRef = false;
       $("#workRefPreview").src = pendingRef;
       $("#refPreviewWrap").hidden = false;
     });
@@ -492,7 +521,9 @@
 
     $("#aboutPortraitInput").onchange = async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressImage(file);
+      const dataUrl = await cropThenCompress(file, { title: "Crop portrait", aspect: "native", outputWidth: 1600, outputHeight: 1600 });
+      e.target.value = "";
+      if(dataUrl === null) return;
       store.updateSettings({ aboutPortraitImage: dataUrl });
       renderAboutPortraitPreview();
       toast("Portrait updated — showing on the site now.");
@@ -666,7 +697,11 @@
   function setupLogoField(){
     $("#logoInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await compressImage(file, { maxDim: 600, quality: 0.85 });
+      const dataUrl = await cropThenCompress(file,
+        { title: "Crop logo", aspect: 1, outputWidth: 600, outputHeight: 600 },
+        (f) => compressImage(f, { maxDim: 600, quality: 0.85 }));
+      e.target.value = "";
+      if(dataUrl === null) return;
       store.updateSettings({ logoImage: dataUrl });
       renderLogoPreview();
       toast("Logo updated — showing on the site now.");
@@ -693,7 +728,11 @@
   function setupFaviconField(){
     $("#faviconInput").addEventListener("change", async (e) => {
       const file = e.target.files[0]; if(!file) return;
-      const dataUrl = await roundedFavicon(file);
+      const dataUrl = await cropThenCompress(file,
+        { title: "Crop favicon", aspect: 1, outputWidth: 512, outputHeight: 512, round: true, cornerRadiusRatio: 0.22, allowSkip: true },
+        (f) => roundedFavicon(f));
+      e.target.value = "";
+      if(dataUrl === null) return;
       store.updateSettings({ faviconImage: dataUrl });
       renderFaviconPreview();
       applyFavicon();
