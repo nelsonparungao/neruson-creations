@@ -70,6 +70,7 @@
 .work-row .wr-flags{ display:flex; gap:6px; margin-top:6px; }
 .flag{ font-family:var(--f-mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:3px 7px; border:1px solid rgba(11,11,10,.25); color:var(--mid); }
 .flag.on{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.flag.heart-flag{ cursor:default; }
 .wr-actions{ display:flex; gap:6px; align-items:center; }
 .icon-btn{ font-family:var(--f-mono); font-size:11px; padding:8px 10px; border:1px solid rgba(11,11,10,.25); cursor:pointer; }
 .icon-btn:hover{ background:var(--paper-dim); }
@@ -111,6 +112,18 @@
 .logo-field-actions .ghost-btn.small{ width:auto; }
 .danger-zone{ margin-top:60px; padding-top:24px; border-top:1px solid rgba(11,11,10,.14); max-width:520px; }
 .danger-zone p{ color:var(--mid); font-size:13px; margin:6px 0 14px; }
+
+/* comments tab */
+.comment-list{ display:flex; flex-direction:column; border-top:1px solid rgba(11,11,10,.14); max-width:760px; }
+.comment-row{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+  padding:16px 0; border-bottom:1px solid rgba(11,11,10,.14);
+}
+.cr-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+.cr-name{ font-family:var(--f-display); font-size:15px; font-weight:500; }
+.cr-date{ font-family:var(--f-mono); font-size:10px; color:var(--mid); letter-spacing:.06em; }
+.cr-message{ font-size:13px; line-height:1.6; color:var(--ink); max-width:560px; white-space:pre-wrap; }
+.comment-row .text-btn{ flex-shrink:0; }
 
 /* modal */
 .modal{ position:fixed; inset:0; z-index:900; background:rgba(11,11,10,.55); display:flex; align-items:flex-start; justify-content:center; opacity:0; visibility:hidden; transition:opacity .35s, visibility .35s; padding:40px 16px; overflow-y:auto; }

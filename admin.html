@@ -29,6 +29,7 @@
   <button class="admin-tab" data-tab="collections">Collections</button>
   <button class="admin-tab" data-tab="about">About</button>
   <button class="admin-tab" data-tab="pagetext">Page Text</button>
+  <button class="admin-tab" data-tab="comments">Comments</button>
   <button class="admin-tab" data-tab="settings">Site &amp; Social</button>
 </nav>
 
@@ -163,6 +164,18 @@
 
       <button class="solid-btn" type="submit">Save page text</button>
     </form>
+  </section>
+
+  <!-- ==================== COMMENTS TAB ==================== -->
+  <section class="admin-panel" data-panel="comments" hidden>
+    <div class="admin-panel-head">
+      <div>
+        <h2>Comments</h2>
+        <p>Notes visitors leave on the guestbook, and how many hearts each artwork has. Comments show on the site instantly — delete anything you'd rather remove.</p>
+      </div>
+      <button class="ghost-btn" id="refreshCommentsBtn">Refresh</button>
+    </div>
+    <div class="comment-list" id="commentList"></div>
   </section>
 
   <!-- ==================== SETTINGS TAB ==================== -->

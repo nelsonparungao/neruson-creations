@@ -242,6 +242,89 @@ class NerusonStoreImpl {
     this._save(this._data);
   }
 
+  // ---- guestbook comments (public, site-wide) ----
+  // Unlike settings/works, comments are written directly by visitors, so
+  // they go straight to Supabase with the anon key rather than through
+  // /api/content. Row Level Security (see supabase/comments_likes.sql)
+  // allows anyone to INSERT and SELECT, but not UPDATE/DELETE — deleting
+  // a comment (moderation) goes through /api/comments instead, which is
+  // protected by middleware.js the same way admin.html is.
+  async fetchComments(){
+    try{
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/comments?select=*&order=created_at.desc`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if(!res.ok) throw new Error("Comments read failed: " + res.status);
+      return await res.json();
+    }catch(e){
+      console.warn("Neruson store: could not load comments.", e);
+      return [];
+    }
+  }
+
+  async addComment({ name, message }){
+    const clean = (message || "").trim();
+    if(!clean) throw new Error("Message is required.");
+    const payload = { name: (name || "").trim().slice(0,80) || "Anonymous", message: clean.slice(0,2000) };
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json", Prefer: "return=representation"
+      },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error("Could not post comment: " + res.status);
+    const rows = await res.json();
+    return rows[0];
+  }
+
+  // ---- likes / hearts (per artwork, public) ----
+  // Same pattern as comments: direct anon-key insert, no update/delete
+  // allowed for anon. One row per like-tap; counts are just row counts
+  // per work_id. The browser remembers what it already liked in
+  // localStorage (see js/main.js) so the heart can't be spammed from the
+  // same device, but this is a courtesy, not real auth.
+  async fetchLikeCounts(){
+    try{
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/likes?select=work_id`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+      );
+      if(!res.ok) throw new Error("Likes read failed: " + res.status);
+      const rows = await res.json();
+      const counts = {};
+      rows.forEach(r => { counts[r.work_id] = (counts[r.work_id] || 0) + 1; });
+      return counts;
+    }catch(e){
+      console.warn("Neruson store: could not load like counts.", e);
+      return {};
+    }
+  }
+
+  async addLike(workId){
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/likes`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json", Prefer: "return=representation"
+      },
+      body: JSON.stringify({ work_id: workId })
+    });
+    if(!res.ok) throw new Error("Could not save like: " + res.status);
+    const rows = await res.json();
+    return rows[0]; // { id, work_id, created_at }
+  }
+
+  async removeLike(likeRowId){
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/likes?id=eq.${encodeURIComponent(likeRowId)}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    if(!res.ok) throw new Error("Could not remove like: " + res.status);
+  }
+
   // ---- utility ----
   resetToDefaults(){ this._save(JSON.parse(JSON.stringify(DEFAULT_DATA))); }
   exportJSON(){ return JSON.stringify(this._data, null, 2); }

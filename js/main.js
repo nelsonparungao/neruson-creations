@@ -14,7 +14,7 @@
   document.addEventListener("DOMContentLoaded", init);
   window.addEventListener("neruson:change", () => { renderAll(); });
 
-  let state = { filterCollection: "all", archiveFilters:{ year:"all", category:"all", medium:"all" }, lightboxIndex:0, lightboxSet:[] };
+  let state = { filterCollection: "all", archiveFilters:{ year:"all", category:"all", medium:"all" }, lightboxIndex:0, lightboxSet:[], likeCounts:{} };
 
   function init(){
     renderNav();
@@ -35,6 +35,12 @@
     setupMobileMenu();
     setupScrollReveal();
     setupLightbox();
+
+    setupLikes();
+    loadLikeCounts();
+    setupGuestbookForm();
+    renderGuestbook();
+    setupLightboxDoubleTap();
   }
 
   function renderAll(){
@@ -145,7 +151,10 @@
 
     grid.innerHTML = works.map((w,i) => cardHTML(w, i)).join("");
     $$(".art-card", grid).forEach(card => {
-      card.addEventListener("click", () => openLightbox(works, parseInt(card.dataset.i,10)));
+      card.addEventListener("click", (e) => {
+        if(e.target.closest("[data-like]")) return; // heart tap, not a card open
+        openLightbox(works, parseInt(card.dataset.i,10));
+      });
     });
     requestObserve(grid);
 
@@ -165,8 +174,13 @@
   }
 
   function cardHTML(w, i){
+    const liked = hasLikedLocally(w.id);
+    const count = state.likeCounts[w.id] || 0;
     return `<div class="art-card reveal${w.featured?" featured":""}" data-i="${i}">
       <div class="frame js-cursor-view"><img src="${w.image}" alt="${escapeHTML(w.title)}" loading="lazy"></div>
+      <button class="heart-btn${liked?" liked":""}" data-like="${w.id}" aria-label="Like this piece">
+        <span class="heart-icon">${liked?"♥":"♡"}</span><span class="heart-count">${count}</span>
+      </button>
       <div class="meta"><span class="t">${escapeHTML(w.title)}</span><span class="y">${escapeHTML(w.date)}</span></div>
       <div class="medium">${escapeHTML(w.medium)}</div>
     </div>`;
@@ -390,6 +404,178 @@
     $(".js-lb-desc", lb).textContent = w.description || "";
     $(".js-lb-tags", lb).innerHTML = (w.tags||[]).map(t=>`<span>${escapeHTML(t)}</span>`).join("");
     $(".js-lb-counter", lb).textContent = `${String(state.lightboxIndex+1).padStart(2,"0")} / ${String(state.lightboxSet.length).padStart(2,"0")}`;
+    $(".lb-heart", lb).dataset.like = w.id;
+    updateHeartUI(w.id);
+  }
+
+  /* -------------------------------------------------- likes -------------------------------------------------- */
+  const LIKED_KEY = "neruson_liked_works";
+
+  async function loadLikeCounts(){
+    state.likeCounts = await store.fetchLikeCounts();
+    renderGallery();
+    if($(".lightbox")?.classList.contains("open")) updateHeartUI(state.lightboxSet[state.lightboxIndex]?.id);
+  }
+
+  function setupLikes(){
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-like]");
+      if(!btn || !btn.dataset.like) return;
+      e.stopPropagation();
+      toggleLike(btn.dataset.like);
+    });
+  }
+
+  // Toggles both ways: taps the heart on for the first time, taps it off
+  // again if it's already liked.
+  function toggleLike(workId){
+    if(hasLikedLocally(workId)) unlike(workId);
+    else like(workId);
+  }
+
+  function like(workId){
+    state.likeCounts[workId] = (state.likeCounts[workId] || 0) + 1;
+    updateHeartUI(workId, true); // optimistic — assume liked while the request is in flight
+    store.addLike(workId).then(row => {
+      markLikedLocally(workId, row.id);
+      updateHeartUI(workId);
+    }).catch(() => {
+      state.likeCounts[workId] = Math.max(0, (state.likeCounts[workId] || 1) - 1);
+      updateHeartUI(workId);
+      toastLike("Couldn't save that like — try again.");
+    });
+  }
+
+  function unlike(workId){
+    const rowId = getLikedMap()[workId];
+    if(!rowId) return; // liked before this fix shipped — nothing to remove server-side
+    unmarkLikedLocally(workId);
+    state.likeCounts[workId] = Math.max(0, (state.likeCounts[workId] || 1) - 1);
+    updateHeartUI(workId);
+    store.removeLike(rowId).catch(() => {
+      markLikedLocally(workId, rowId);
+      state.likeCounts[workId] = (state.likeCounts[workId] || 0) + 1;
+      updateHeartUI(workId);
+      toastLike("Couldn't remove that like — try again.");
+    });
+  }
+
+  // Instagram-style double-tap: only ever adds a like, never removes one.
+  function likeOnly(workId){
+    if(hasLikedLocally(workId)) return;
+    like(workId);
+  }
+
+  function updateHeartUI(workId, forceLiked){
+    if(!workId) return;
+    const liked = forceLiked || hasLikedLocally(workId);
+    const count = state.likeCounts[workId] || 0;
+    $$(`[data-like="${workId}"]`).forEach(btn => {
+      btn.classList.toggle("liked", liked);
+      $(".heart-icon", btn).textContent = liked ? "♥" : "♡";
+      $(".heart-count", btn).textContent = count;
+    });
+  }
+
+  function hasLikedLocally(id){ return !!getLikedMap()[id]; }
+  function markLikedLocally(id, rowId){ const m = getLikedMap(); m[id] = rowId; localStorage.setItem(LIKED_KEY, JSON.stringify(m)); }
+  function unmarkLikedLocally(id){ const m = getLikedMap(); delete m[id]; localStorage.setItem(LIKED_KEY, JSON.stringify(m)); }
+  function getLikedMap(){
+    try{
+      const parsed = JSON.parse(localStorage.getItem(LIKED_KEY) || "{}");
+      return (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : {};
+    }catch(e){ return {}; }
+  }
+
+  // Instagram-style double-tap/double-click on the lightbox image to like,
+  // with a big heart popping over the artwork every time — double-tapping
+  // never unlikes, same as the real thing.
+  function setupLightboxDoubleTap(){
+    const wrap = $(".lightbox-img-wrap"); if(!wrap) return;
+    const img = $(".js-lb-img", wrap);
+    let lastTap = 0;
+
+    img.addEventListener("dblclick", (e) => {
+      e.preventDefault();
+      likeCurrentLightboxWork();
+    });
+
+    img.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if(now - lastTap < 320){
+        e.preventDefault();
+        likeCurrentLightboxWork();
+      }
+      lastTap = now;
+    });
+  }
+
+  function likeCurrentLightboxWork(){
+    const w = state.lightboxSet[state.lightboxIndex]; if(!w) return;
+    likeOnly(w.id);
+    popHeart();
+  }
+
+  function popHeart(){
+    const pop = $(".lb-heart-pop"); if(!pop) return;
+    pop.classList.remove("pop");
+    void pop.offsetWidth; // restart the animation even on repeated taps
+    pop.classList.add("pop");
+  }
+
+  function toastLike(msg){
+    // small inline notice, reuses no existing UI — just a console fallback
+    // so a failed like never looks like a silent success.
+    console.warn(msg);
+  }
+
+  /* -------------------------------------------------- guestbook -------------------------------------------------- */
+  async function renderGuestbook(){
+    const wrap = $(".js-guestbook-list"); if(!wrap) return;
+    wrap.innerHTML = `<p class="gb-empty">Loading notes…</p>`;
+    const comments = await store.fetchComments();
+    if(!comments.length){
+      wrap.innerHTML = `<p class="gb-empty">No notes yet — be the first to leave one.</p>`;
+      return;
+    }
+    wrap.innerHTML = comments.map(c => `
+      <div class="gb-note">
+        <div class="gb-note-head">
+          <span class="gb-name">${escapeHTML(c.name || "Anonymous")}</span>
+          <span class="gb-date">${formatDate(c.created_at)}</span>
+        </div>
+        <p class="gb-message">${escapeHTML(c.message)}</p>
+      </div>
+    `).join("");
+  }
+
+  function setupGuestbookForm(){
+    const form = $("#guestbookForm"); if(!form) return;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const name = fd.get("name");
+      const message = fd.get("message");
+      if(!message || !message.trim()) return;
+      const submitBtn = $(".gb-submit", form);
+      submitBtn.disabled = true;
+      try{
+        await store.addComment({ name, message });
+        form.reset();
+        await renderGuestbook();
+      }catch(err){
+        console.error(err);
+        alert("Couldn't post your note — check your connection and try again.");
+      }finally{
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  function formatDate(iso){
+    try{
+      return new Date(iso).toLocaleDateString(undefined, { year:"numeric", month:"short", day:"numeric" });
+    }catch(e){ return ""; }
   }
 
   /* -------------------------------------------------- cursor -------------------------------------------------- */

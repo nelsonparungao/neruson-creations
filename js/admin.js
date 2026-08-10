@@ -11,6 +11,7 @@
   const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
 
   let searchTerm = "";
+  let likeCounts = {};
 
   document.addEventListener("DOMContentLoaded", init);
 
@@ -28,15 +29,18 @@
 
     renderBrand();
     setupTabs();
+    likeCounts = await store.fetchLikeCounts();
     renderWorkList();
     renderCollectionsTab();
     renderAboutForm();
     renderPageTextForm();
     renderSettingsForm();
+    renderCommentsTab();
     setupUpload();
     setupWorkModal();
     setupToolbar();
     setupHeaderActions();
+    setupCommentsTab();
     window.addEventListener("neruson:savefail", () =>
       toast("⚠ Could not save — check your connection and try again."));
 
@@ -110,6 +114,7 @@
           <div class="wr-flags">
             <span class="flag ${w.featured?"on":""}" data-action="feature">${w.featured?"Featured":"Feature"}</span>
             <span class="flag ${w.hidden?"on":""}" data-action="hide">${w.hidden?"Hidden":"Visible"}</span>
+            <span class="flag heart-flag">♥ ${likeCounts[w.id] || 0}</span>
           </div>
         </div>
         <div class="wr-actions">
@@ -398,6 +403,58 @@
       store.updateSettings({ siteText });
       toast("Page text saved.");
     };
+  }
+
+  /* -------------------------------------------------- comments tab -------------------------------------------------- */
+  async function renderCommentsTab(){
+    const list = $("#commentList"); if(!list) return;
+    list.innerHTML = `<p style="padding:30px 0;color:var(--mid);font-size:13px;">Loading comments…</p>`;
+    const comments = await store.fetchComments();
+    if(!comments.length){
+      list.innerHTML = `<p style="padding:30px 0;color:var(--mid);font-size:13px;">No comments yet.</p>`;
+      return;
+    }
+    list.innerHTML = comments.map(c => `
+      <div class="comment-row" data-id="${c.id}">
+        <div>
+          <div class="cr-head">
+            <span class="cr-name">${escapeHTML(c.name || "Anonymous")}</span>
+            <span class="cr-date">${formatDate(c.created_at)}</span>
+          </div>
+          <p class="cr-message">${escapeHTML(c.message)}</p>
+        </div>
+        <button class="text-btn danger" data-action="delete">Delete</button>
+      </div>
+    `).join("");
+
+    $$(".comment-row [data-action=delete]", list).forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const row = btn.closest(".comment-row");
+        const id = row.dataset.id;
+        if(!confirm("Delete this comment? This can't be undone.")) return;
+        btn.disabled = true;
+        try{
+          const res = await fetch(`/api/comments?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+          if(!res.ok) throw new Error("Delete failed: " + res.status);
+          row.remove();
+          toast("Comment deleted.");
+        }catch(err){
+          console.error(err);
+          toast("⚠ Could not delete — check your connection and try again.");
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function setupCommentsTab(){
+    $("#refreshCommentsBtn")?.addEventListener("click", () => renderCommentsTab());
+  }
+
+  function formatDate(iso){
+    try{
+      return new Date(iso).toLocaleDateString(undefined, { year:"numeric", month:"short", day:"numeric" });
+    }catch(e){ return ""; }
   }
 
   /* -------------------------------------------------- settings tab -------------------------------------------------- */
