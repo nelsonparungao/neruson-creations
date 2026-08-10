@@ -28,6 +28,7 @@
     showLoadingState(false);
 
     renderBrand();
+    applyFavicon();
     setupTabs();
     likeCounts = await store.fetchLikeCounts();
     renderWorkList();
@@ -74,6 +75,43 @@
     t.classList.add("show");
     clearTimeout(toast._t);
     toast._t = setTimeout(() => t.classList.remove("show"), 2400);
+  }
+
+  // Promise-based replacement for window.confirm(), using the same
+  // centered modal styling as the artwork editor instead of the browser's
+  // native dialog. Resolves true on confirm, false on cancel/escape/backdrop.
+  function showConfirm({ title = "Are you sure?", message = "", okText = "Delete", danger = true } = {}){
+    return new Promise((resolve) => {
+      const modal = $("#confirmModal");
+      const okBtn = $("#confirmOkBtn");
+      const cancelBtn = $("#confirmCancelBtn");
+      $("#confirmTitle").textContent = title;
+      $("#confirmMessage").textContent = message;
+      okBtn.textContent = okText;
+      okBtn.classList.toggle("is-danger", danger);
+      modal.classList.add("open");
+
+      function cleanup(result){
+        modal.classList.remove("open");
+        okBtn.removeEventListener("click", onOk);
+        cancelBtn.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKey);
+        resolve(result);
+      }
+      function onOk(){ cleanup(true); }
+      function onCancel(){ cleanup(false); }
+      function onBackdrop(e){ if(e.target === modal) cleanup(false); }
+      function onKey(e){
+        if(e.key === "Escape") cleanup(false);
+        if(e.key === "Enter") cleanup(true);
+      }
+
+      okBtn.addEventListener("click", onOk);
+      cancelBtn.addEventListener("click", onCancel);
+      modal.addEventListener("click", onBackdrop);
+      document.addEventListener("keydown", onKey);
+    });
   }
 
   /* -------------------------------------------------- tabs -------------------------------------------------- */
@@ -189,6 +227,62 @@
     });
   }
 
+  // Crops to a centered square, clips it to a rounded-rect path, and
+  // exports as PNG (so the corners outside the radius are transparent
+  // instead of square). radiusRatio is relative to the square's size —
+  // 0.22 reads as a soft "app icon" style rounding.
+  function roundedFavicon(file, { size = 512, radiusRatio = 0.22 } = {}){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = () => {
+        img.onerror = reject;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = size; canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          const srcSize = Math.min(img.width, img.height);
+          const sx = (img.width - srcSize) / 2;
+          const sy = (img.height - srcSize) / 2;
+          const r = size * radiusRatio;
+          ctx.beginPath();
+          ctx.moveTo(r, 0);
+          ctx.arcTo(size, 0, size, size, r);
+          ctx.arcTo(size, size, 0, size, r);
+          ctx.arcTo(0, size, 0, 0, r);
+          ctx.arcTo(0, 0, size, 0, r);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, size, size);
+          resolve(canvas.toDataURL("image/png"));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Shared by every tab (and by main.js on the public site) — points the
+  // <link rel="icon"> at the uploaded favicon, or falls back to nothing
+  // (browser default) once it's removed.
+  function applyFavicon(){
+    const s = store.settings();
+    let link = document.getElementById("siteFavicon");
+    if(!link){
+      link = document.createElement("link");
+      link.id = "siteFavicon";
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    if(s.faviconImage){
+      link.type = "image/png";
+      link.href = s.faviconImage;
+    } else {
+      link.removeAttribute("href");
+    }
+  }
+
   function readAsDataURL(file){
     return new Promise((resolve,reject) => {
       const r = new FileReader();
@@ -252,10 +346,15 @@
       pendingRef = null; clearRef = true; $("#refPreviewWrap").hidden = true;
     });
 
-    $("#deleteWorkBtn").addEventListener("click", () => {
+    $("#deleteWorkBtn").addEventListener("click", async () => {
       const id = $("#workForm [name=id]").value;
       if(!id) return closeWorkModal();
-      if(confirm("Delete this artwork? This cannot be undone.")){
+      const ok = await showConfirm({
+        title: "Delete this artwork?",
+        message: "This cannot be undone.",
+        okText: "Delete artwork"
+      });
+      if(ok){
         store.deleteWork(id);
         renderWorkList();
         closeWorkModal();
@@ -351,8 +450,13 @@
         renderWorkList();
         toast("Collection saved.");
       });
-      row.querySelector("[data-action=delete]").addEventListener("click", () => {
-        if(confirm("Delete this collection? Artwork inside it will stay, just unassigned.")){
+      row.querySelector("[data-action=delete]").addEventListener("click", async () => {
+        const ok = await showConfirm({
+          title: "Delete this collection?",
+          message: "Artwork inside it will stay, just unassigned.",
+          okText: "Delete collection"
+        });
+        if(ok){
           store.deleteCollection(id);
           renderCollectionsTab();
           toast("Collection deleted.");
@@ -462,7 +566,12 @@
       btn.addEventListener("click", async () => {
         const row = btn.closest(".comment-row");
         const id = row.dataset.id;
-        if(!confirm("Delete this comment? This can't be undone.")) return;
+        const ok = await showConfirm({
+          title: "Delete this comment?",
+          message: "This can't be undone.",
+          okText: "Delete comment"
+        });
+        if(!ok) return;
         btn.disabled = true;
         try{
           const res = await fetch(`/api/comments?id=${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -506,6 +615,8 @@
 
     renderLogoPreview();
     setupLogoField();
+    renderFaviconPreview();
+    setupFaviconField();
 
     form.onsubmit = (e) => {
       e.preventDefault();
@@ -528,8 +639,13 @@
       toast("Settings saved.");
     };
 
-    $("#resetBtn").addEventListener("click", () => {
-      if(confirm("Reset all content back to the original placeholder set? This deletes your changes.")){
+    $("#resetBtn").addEventListener("click", async () => {
+      const ok = await showConfirm({
+        title: "Reset to default content?",
+        message: "This deletes all your changes and restores the original placeholder set. This cannot be undone.",
+        okText: "Reset everything"
+      });
+      if(ok){
         store.resetToDefaults();
         location.reload();
       }
@@ -560,6 +676,35 @@
       store.updateSettings({ logoImage: "" });
       renderLogoPreview();
       toast("Logo removed — back to the text mark.");
+    });
+  }
+
+  function renderFaviconPreview(){
+    const s = store.settings();
+    const img = $("#faviconPreview");
+    const empty = $("#faviconPreviewEmpty");
+    if(s.faviconImage){
+      img.src = s.faviconImage; img.hidden = false; empty.hidden = true;
+    } else {
+      img.hidden = true; empty.hidden = false;
+    }
+  }
+
+  function setupFaviconField(){
+    $("#faviconInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0]; if(!file) return;
+      const dataUrl = await roundedFavicon(file);
+      store.updateSettings({ faviconImage: dataUrl });
+      renderFaviconPreview();
+      applyFavicon();
+      toast("Favicon updated — showing on the site now.");
+    });
+    $("#clearFaviconBtn").addEventListener("click", () => {
+      if(!store.settings().faviconImage) return;
+      store.updateSettings({ faviconImage: "" });
+      renderFaviconPreview();
+      applyFavicon();
+      toast("Favicon removed.");
     });
   }
 

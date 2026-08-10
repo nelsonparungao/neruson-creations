@@ -1,0 +1,150 @@
+/* ==========================================================================
+   ARCHIVE — "Sacred Timeline" styling (TVA / Loki inspired)
+   Self-contained on purpose: scoped under .tva-timeline with its own dark
+   panel background, so it doesn't depend on (or fight with) style.css.
+   ========================================================================== */
+
+.tva-timeline{
+  position: relative;
+  background: #0b0b0c;
+  border: 1px solid rgba(255, 183, 77, 0.25);
+  border-radius: 18px;
+  padding: 64px 24px 76px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.tva-timeline::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 170, 60, 0.12), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tva-trunk{
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, transparent, #ffb84d 8%, #ff8a1e 50%, #ffb84d 92%, transparent);
+  box-shadow: 0 0 14px 2px rgba(255,150,40,0.6), 0 0 46px 8px rgba(255,120,20,0.25);
+  animation: tva-pulse 3.4s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes tva-pulse{
+  0%, 100% { opacity: .75; filter: brightness(1); }
+  50%      { opacity: 1;   filter: brightness(1.35); }
+}
+
+.tva-year-block{ position: relative; z-index: 2; margin-bottom: 68px; }
+.tva-year-block:last-child{ margin-bottom: 0; }
+
+.tva-year-node{
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 36px;
+}
+
+.tva-year-badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 22px;
+  background: #151210;
+  border: 1px solid #ffb765;
+  border-radius: 999px;
+  color: #ffcf8a;
+  font-family: "Courier New", ui-monospace, monospace;
+  letter-spacing: .14em;
+  font-size: 13px;
+  text-transform: uppercase;
+  box-shadow: 0 0 18px rgba(255,150,40,.45), inset 0 0 12px rgba(255,150,40,.15);
+}
+
+.tva-year-badge .tva-count{
+  color: rgba(255,207,138,.55);
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.tva-row{
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 46px 1fr;
+  align-items: center;
+  margin: 28px 0;
+}
+
+.tva-row .tva-branch{
+  position: relative;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255,160,50,.05), #ff9c33);
+}
+.tva-row.left .tva-branch{
+  grid-column: 1; justify-self: end; width: 72%;
+  background: linear-gradient(270deg, rgba(255,160,50,.05), #ff9c33);
+}
+.tva-row.right .tva-branch{ grid-column: 3; justify-self: start; width: 72%; }
+
+.tva-row .tva-node-dot{
+  grid-column: 2;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: #ffb84d;
+  box-shadow: 0 0 10px 3px rgba(255,150,40,.8);
+  justify-self: center;
+}
+
+.tva-card{
+  position: relative;
+  background: #141210;
+  border: 1px solid rgba(255,175,90,.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.tva-row.left .tva-card{ grid-column: 1; justify-self: end; text-align: right; margin-right: 16px; }
+.tva-row.right .tva-card{ grid-column: 3; justify-self: start; text-align: left; margin-left: 16px; }
+
+.tva-card:hover{
+  border-color: #ffb84d;
+  box-shadow: 0 0 24px rgba(255,150,40,.35);
+  transform: translateY(-2px);
+}
+
+.tva-card-index{
+  font-family: "Courier New", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: #ff9c33;
+  text-transform: uppercase;
+}
+.tva-card-title{ font-size: 15px; font-weight: 600; color: #f4ece0; margin: 4px 0 2px; }
+.tva-card-meta{ font-size: 11px; color: rgba(244,236,224,.55); letter-spacing: .03em; }
+
+.tva-empty{
+  position: relative; z-index: 2;
+  text-align: center; padding: 40px 0;
+  color: rgba(244,236,224,.6);
+  font-family: "Courier New", monospace;
+}
+
+@media (max-width: 720px){
+  .tva-trunk{ left: 20px; transform: none; }
+  .tva-row{ grid-template-columns: 20px 1fr; }
+  .tva-row .tva-node-dot{ grid-column: 1; }
+  .tva-row .tva-branch{ display: none; }
+  .tva-row.left .tva-card, .tva-row.right .tva-card{
+    grid-column: 2; justify-self: start; text-align: left; margin-left: 16px; margin-right: 0;
+  }
+  .tva-year-node{ justify-content: flex-start; padding-left: 6px; }
+}

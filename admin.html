@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Artwork — Neruson Creations</title>
+<link rel="icon" id="siteFavicon" href="">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/admin.css">
 </head>
@@ -198,6 +199,20 @@
         </div>
       </div>
 
+      <h3 class="admin-subhead">Favicon</h3>
+      <p class="hint" style="margin:-8px 0 4px;">Shown in the browser tab on both the live site and this dashboard. Automatically cropped to a rounded square — upload any image.</p>
+      <div class="logo-field">
+        <div class="logo-preview-wrap" style="border-radius:22%;overflow:hidden;">
+          <img id="faviconPreview" src="" alt="" hidden>
+          <span id="faviconPreviewEmpty" class="logo-preview-empty">No&nbsp;favicon</span>
+        </div>
+        <div class="logo-field-actions">
+          <label class="ghost-btn small" for="faviconInput">Upload favicon image</label>
+          <input type="file" id="faviconInput" accept="image/*" hidden>
+          <button type="button" class="text-btn danger" id="clearFaviconBtn">Remove favicon</button>
+        </div>
+      </div>
+
       <div class="form-grid">
         <label>Artist name (line 1 of the logo)
           <input type="text" name="artistName">
@@ -307,6 +322,31 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ==================== CONFIRM MODAL ==================== -->
+<div class="modal" id="confirmModal">
+  <div class="modal-card confirm-card">
+    <div class="modal-head">
+      <h3 id="confirmTitle">Are you sure?</h3>
+    </div>
+    <div class="modal-body confirm-body">
+      <p id="confirmMessage"></p>
+    </div>
+    <div class="modal-actions confirm-actions">
+      <button type="button" class="ghost-btn" id="confirmCancelBtn">Cancel</button>
+      <button type="button" class="solid-btn" id="confirmOkBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  #confirmModal .confirm-card{ max-width:380px; }
+  #confirmModal .confirm-body{ padding:4px 0 22px; }
+  #confirmModal .confirm-body p{ margin:0; color:var(--mid,#666); font-size:14px; line-height:1.5; }
+  #confirmModal .confirm-actions{ justify-content:flex-end; gap:10px; display:flex; }
+  #confirmModal #confirmOkBtn.is-danger{ background:#c62828; border-color:#c62828; }
+  #confirmModal #confirmOkBtn.is-danger:hover{ background:#a91f1f; }
+</style>
 
 <script src="js/data.js"></script>
 <script src="js/admin.js"></script>

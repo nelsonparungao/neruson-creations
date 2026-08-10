@@ -26,6 +26,7 @@ const DEFAULT_DATA = {
     heroArtworkId: "w1",
     footerPhrase: "Drawn by hand. Remembered in monochrome.",
     logoImage: "",
+    faviconImage: "",
     aboutTitle: "About Neruson",
     aboutText:
       "Neruson Creations is a personal collection of monochrome drawings exploring people, expressions, identity, and the quiet details of everyday life.\n\nMost of the works begin with a photograph or personal reference and are translated into black and white through pencil, ink, and drawing.\n\nWhat started as simple drawings became a way of documenting people, moments, and perspectives through lines.",

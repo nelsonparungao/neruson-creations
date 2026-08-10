@@ -16,7 +16,27 @@
 
   let state = { filterCollection: "all", archiveFilters:{ year:"all", category:"all", medium:"all" }, lightboxIndex:0, lightboxSet:[], likeCounts:{} };
 
+  // Points <link rel="icon"> at the favicon uploaded in the admin
+  // dashboard. Falls back to nothing (browser default) once it's removed.
+  function applyFavicon(){
+    const s = store.settings();
+    let link = document.getElementById("siteFavicon");
+    if(!link){
+      link = document.createElement("link");
+      link.id = "siteFavicon";
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    if(s.faviconImage){
+      link.type = "image/png";
+      link.href = s.faviconImage;
+    } else {
+      link.removeAttribute("href");
+    }
+  }
+
   function init(){
+    applyFavicon();
     renderNav();
     renderSiteText();
     renderHero();
@@ -45,6 +65,7 @@
   }
 
   function renderAll(){
+    applyFavicon();
     renderNav(); renderSiteText(); renderHero(); renderGallery(); renderLatest(); renderCollections();
     renderAbout(); renderProcess(); renderArchive(); renderContact(); renderFooter();
     setupScrollReveal();
